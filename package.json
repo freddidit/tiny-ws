@@ -1,0 +1,23 @@
+{
+  "name": "tiny-ws",
+  "version": "1.0.0",
+  "description": "A minimal websocket implementation",
+  "main": "./dist/index.js",
+  "scripts": {
+    "test": "npx vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freddidit/tiny-ws.git"
+  },
+  "keywords": [],
+  "author": "freddie",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/freddidit/tiny-ws/issues"
+  },
+  "homepage": "https://github.com/freddidit/tiny-ws#readme",
+  "devDependencies": {
+    "vitest": "^3.2.3"
+  }
+}
