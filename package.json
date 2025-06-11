@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/freddidit/tiny-ws#readme",
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "vitest": "^3.2.3"
   }
 }
