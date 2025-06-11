@@ -4,7 +4,7 @@ import { Credentials, parseUrl } from './index'
 test('Parses a websocket URL', () => {
     const credentials: Credentials = {
         path: '/',
-        port: '8080',
+        port: 8080,
         secure: false,
         host: 'localhost'
     }
