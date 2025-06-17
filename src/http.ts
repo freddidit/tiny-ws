@@ -1,29 +1,26 @@
-const HEADER_SEPARATOR = ': '
-const SECTION_SEPARATOR = '\r\n\r\n'
-
-export type HttpResponse = {
-    statusCode: number
-    statusText: string
-    headers: Record<string, string>
-    body?: Buffer
-}
+export const HEADER_SEPARATOR = ': '
+export const LINE_SEPARATOR = '\r\n'
+export const SECTION_SEPARATOR = '\r\n\r\n'
+export const STATUS_LINE_REGEX = /^HTTP\/1\.1 (\d{3}) (.*)$/
+export const STRING_ENCODING = 'utf-8'
+export const HTTP_VERSION = 'HTTP/1.1'
 
 export function buildRawHttpRequest(method: string, path: string, headers: Record<string, string>) {
-    const lines = [`${method} ${path} HTTP/1.1`]
+    const lines = [`${method} ${path} ${HTTP_VERSION}`]
 
     for (const [k, v] of Object.entries(headers)) 
-        lines.push(`${k}: ${v}`)
+        lines.push(`${k}${HEADER_SEPARATOR}${v}`)
     lines.push('', '')
 
-    return lines.join('\r\n')
+    return lines.join(LINE_SEPARATOR)
 }
 
 export function parseHttp(buffer: Buffer) {    
     let linesPtr = 0
-    const bufferString = buffer.toString('utf-8')
-    const lines = bufferString.split('\r\n')
+    const bufferString = buffer.toString(STRING_ENCODING)
+    const lines = bufferString.split(LINE_SEPARATOR)
     const statusLine = lines[linesPtr++]
-    const match = statusLine.match(/^HTTP\/1\.1 (\d{3}) (.*)$/)
+    const match = statusLine.match(STATUS_LINE_REGEX)
     const headers: Record<string, string> = {}
     
     if (!match) throw new Error('Invalid HTTP status line')
