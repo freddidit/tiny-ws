@@ -1,19 +1,13 @@
-import { Socket, readUntil } from './socket'
-import { buildRawHttpRequest, parseHttp, HttpResponse } from './http'
 import crypto from 'crypto'
+import { Socket } from './socket'
+import { buildRawHttpRequest, parseHttp, SECTION_SEPARATOR } from './http'
 
 const HANDSHAKE_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
-function generateKey() {
-    return crypto.randomBytes(16).toString('base64')
-}
+export function performHandshake(socket: Socket, url: URL) {
+    const key = crypto.randomBytes(16).toString('base64')
+    const expectedKey = crypto.createHash('sha1').update(key + HANDSHAKE_GUID).digest('base64')
 
-function generateExpectedKey(key: string) {
-    return crypto.createHash('sha1').update(key + HANDSHAKE_GUID).digest('base64')
-}
-
-export async function client(socket: Socket, url: URL) {
-    const key = generateKey()
     socket.write(
         buildRawHttpRequest(
             'GET',
@@ -28,16 +22,20 @@ export async function client(socket: Socket, url: URL) {
             }
         )
     )
-    const rawResponse = await readUntil(socket, '\r\n\r\n')
-    if (!rawResponse) throw new Error('Handshake ignored')
-    const response = parseHttp(rawResponse)
-    validateHandshake(response, key)
-    return response
-}
+                
+    return (buffer: Buffer) => {
+        const terminatorIndex = buffer.indexOf(SECTION_SEPARATOR)        
 
-function validateHandshake(response: HttpResponse, key: string) {    
-    if (response.statusCode !== 101) throw new Error('Handshake denied')
-    if (response.headers['upgrade'] !== 'websocket') throw new Error('Invalid Upgrade header')
-    if (response.headers['connection'] !== 'Upgrade') throw new Error('Invalid Connection header')
-    if (response.headers['sec-websocket-accept'] !== generateExpectedKey(key)) throw new Error('Invalid Sec-WebSocket-Accept key')
+        if (terminatorIndex === -1) return -1
+
+        const bytesConsumed = terminatorIndex + 4
+        const response = parseHttp(buffer.subarray(0, bytesConsumed))
+
+        if (response.statusCode !== 101) throw new Error('Handshake denied')
+        if (response.headers['upgrade'] !== 'websocket') throw new Error('Invalid Upgrade header')
+        if (response.headers['connection'] !== 'Upgrade') throw new Error('Invalid Connection header')
+        if (response.headers['sec-websocket-accept'] !== expectedKey) throw new Error('Invalid Sec-WebSocket-Accept key')        
+
+        return bytesConsumed
+    }
 }
