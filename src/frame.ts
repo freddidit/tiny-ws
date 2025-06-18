@@ -1,5 +1,14 @@
 import crypto from 'crypto'
 
+export enum Opcodes {
+    CONTINUATION = 0x0,
+    TEXT = 0x1,
+    BINARY = 0x2,
+    CLOSE = 0x8,
+    PING = 0x9,
+    PONG = 0xa,    
+}
+
 export function decodeFrame(buffer: Buffer) {
     if (buffer.length < 2) return
     
@@ -7,7 +16,7 @@ export function decodeFrame(buffer: Buffer) {
     const byte0 = buffer[ptr++]
     const byte1 = buffer[ptr++]
     const fin = !!(byte0 & 0x80)
-    const opcode = byte0 & 0x0f    
+    const opcode = (byte0 & 0x0f) as Opcodes
     let payloadLength = byte1 & 0x7f    
 
     if (payloadLength === 126) {
@@ -32,7 +41,7 @@ export function decodeFrame(buffer: Buffer) {
     return { fin, opcode, payloadLength, bytesConsumed: ptr, payload }
 }
 
-export function encodeFrame(fin: boolean, opcode: number, payload: Buffer, maskingKey: Buffer = crypto.randomBytes(4)) {
+export function encodeFrame(fin: boolean, opcode: Opcodes, payload: Buffer, maskingKey: Buffer = crypto.randomBytes(4)) {
     const maskBit = 0x80
     const payloadLength = payload.length < 126 ? payload.length : payload.length < 0x10000 ? 126 : 127
     const byte0 = (fin ? 0x80 : 0x00) | opcode
