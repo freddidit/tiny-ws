@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { STRING_ENCODING } from './http'
 
 export enum Opcodes {
     CONTINUATION = 0x0,
@@ -68,3 +69,20 @@ export function encodeFrame(fin: boolean, opcode: Opcodes, payload: Buffer, mask
 
     return frame
 }
+
+export function encodeCloseFrame(code: number) {
+    const payload = Buffer.alloc(2)
+    payload.writeUInt16BE(code)
+    return encodeFrame(true, Opcodes.CLOSE, payload)
+}
+
+export function encodeTextFrame(text: string) {
+    // TODO: fragment maybe    
+    return encodeFrame(true, Opcodes.TEXT, Buffer.from(text, STRING_ENCODING))
+}
+
+export function encodeBinaryFrame(binary: Buffer) {
+    // TODO: fragment maybe
+    return encodeFrame(true, Opcodes.BINARY, binary)
+}
+
